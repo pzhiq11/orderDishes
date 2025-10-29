@@ -30,6 +30,7 @@ export default function DishesPage() {
   const [showDishModal, setShowDishModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [editingDish, setEditingDish] = useState<Dish | null>(null)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [loading, setLoading] = useState(true)
 
   // 表单数据
@@ -151,10 +152,55 @@ export default function DishesPage() {
       if (res.ok) {
         fetchCategories()
         setShowCategoryModal(false)
-        setCategoryForm({ name: '', description: '' })
+        resetCategoryForm()
       }
     } catch (error) {
       console.error('创建分类失败:', error)
+    }
+  }
+
+  const handleUpdateCategory = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingCategory) return
+
+    try {
+      const res = await fetch(`/api/categories/${editingCategory.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(categoryForm),
+      })
+      
+      if (res.ok) {
+        fetchCategories()
+        setShowCategoryModal(false)
+        resetCategoryForm()
+      }
+    } catch (error) {
+      console.error('更新分类失败:', error)
+    }
+  }
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('确定要删除这个分类吗？删除分类前请确保该分类下没有菜品。')) return
+
+    try {
+      const res = await fetch(`/api/categories/${id}`, {
+        method: 'DELETE',
+      })
+      
+      if (res.ok) {
+        fetchCategories()
+        // 如果删除的是当前选中的分类，清空选择
+        if (selectedCategory === id) {
+          setSelectedCategory('')
+        }
+      } else {
+        const data = await res.json()
+        alert(data.error || '删除失败')
+      }
+    } catch (error) {
+      console.error('删除分类失败:', error)
+      alert('删除分类失败')
     }
   }
 
@@ -170,6 +216,15 @@ export default function DishesPage() {
     setShowDishModal(true)
   }
 
+  const openEditCategory = (category: Category) => {
+    setEditingCategory(category)
+    setCategoryForm({
+      name: category.name,
+      description: '',
+    })
+    setShowCategoryModal(true)
+  }
+
   const resetDishForm = () => {
     setDishForm({
       name: '',
@@ -179,6 +234,14 @@ export default function DishesPage() {
       isActive: true,
     })
     setEditingDish(null)
+  }
+
+  const resetCategoryForm = () => {
+    setCategoryForm({
+      name: '',
+      description: '',
+    })
+    setEditingCategory(null)
   }
 
   return (
@@ -201,7 +264,10 @@ export default function DishesPage() {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setShowCategoryModal(true)}
+                onClick={() => {
+                  resetCategoryForm()
+                  setShowCategoryModal(true)
+                }}
                 className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
               >
                 新增分类
@@ -236,16 +302,52 @@ export default function DishesPage() {
                   全部分类
                 </button>
                 {categories.map((cat) => (
-                  <button
+                  <div
                     key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`w-full text-left px-3 py-2 rounded flex justify-between ${
-                      selectedCategory === cat.id ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                    className={`group rounded ${
+                      selectedCategory === cat.id ? 'bg-blue-50' : ''
                     }`}
                   >
-                    <span>{cat.name}</span>
-                    <span className="text-gray-500 text-sm">{cat._count?.dishes || 0}</span>
-                  </button>
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={`flex-1 text-left px-3 py-2 rounded-l ${
+                          selectedCategory === cat.id ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span>{cat.name}</span>
+                          <span className="text-gray-500 text-sm">{cat._count?.dishes || 0}</span>
+                        </div>
+                      </button>
+                      <div className="flex gap-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openEditCategory(cat)
+                          }}
+                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                          title="编辑分类"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteCategory(cat.id)
+                          }}
+                          className="p-1 text-red-600 hover:bg-red-50 rounded"
+                          title="删除分类"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -412,12 +514,14 @@ export default function DishesPage() {
         </div>
       )}
 
-      {/* 分类创建模态框 */}
+      {/* 分类编辑模态框 */}
       {showCategoryModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">新增分类</h2>
-            <form onSubmit={handleCreateCategory}>
+            <h2 className="text-xl font-bold mb-4">
+              {editingCategory ? '编辑分类' : '新增分类'}
+            </h2>
+            <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory}>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">分类名称</label>
@@ -444,7 +548,7 @@ export default function DishesPage() {
                   type="button"
                   onClick={() => {
                     setShowCategoryModal(false)
-                    setCategoryForm({ name: '', description: '' })
+                    resetCategoryForm()
                   }}
                   className="px-4 py-2 border rounded hover:bg-gray-50"
                 >
@@ -454,7 +558,7 @@ export default function DishesPage() {
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
-                  创建
+                  {editingCategory ? '保存' : '创建'}
                 </button>
               </div>
             </form>
