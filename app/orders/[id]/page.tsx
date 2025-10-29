@@ -307,8 +307,8 @@ export default function OrderDetailPage() {
                     onClick={() => setShowCopyModal(true)}
                     className="flex-1 sm:flex-none px-3 md:px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm md:text-base"
                   >
-                    <span className="hidden sm:inline">复制历史菜单</span>
-                    <span className="sm:hidden">📋 复制</span>
+                    <span className="hidden sm:inline">添加历史菜单</span>
+                    <span className="sm:hidden">📋 添加</span>
                   </button>
                   <button
                     onClick={handleRandomDish}
@@ -501,7 +501,7 @@ export default function OrderDetailPage() {
                       : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                   }`}
                 >
-                  {copySuccess ? '✓ 已复制' : '📋 复制菜单'}
+                  {copySuccess ? '✓ 已复制' : '📋 复制菜品'}
                 </button>
               </div>
               <div className="space-y-2 sm:space-y-3">
@@ -568,7 +568,7 @@ export default function OrderDetailPage() {
       {showCopyModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">选择要复制的历史订单</h2>
+            <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">选择要添加的历史订单</h2>
             {allOrders.length === 0 ? (
               <p className="text-center py-8 text-gray-500 text-sm sm:text-base">暂无历史订单</p>
             ) : (
