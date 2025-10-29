@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// 菜品分类
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  dishes      Dish[]
+}
+
+// 菜品
+model Dish {
+  id          String      @id @default(cuid())
+  name        String
+  categoryId  String
+  price       Float
+  description String?
+  imageUrl    String?
+  isActive    Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+}
+
+// 订单
+model Order {
+  id          String      @id @default(cuid())
+  orderDate   DateTime    @default(now())
+  status      String      @default("IN_PROGRESS")
+  totalPrice  Float       @default(0)
+  note        String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+// 订单明细
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  dishId      String
+  quantity    Int      @default(1)
+  price       Float
+  isRandom    Boolean  @default(false)
+  note        String?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  dish        Dish     @relation(fields: [dishId], references: [id])
+}
